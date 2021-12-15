@@ -6,10 +6,10 @@ Translation agencies often apply word discounts depending on translation memory 
 
 A typical discount matrix from an agency can look like this:
 
-> ICE match -> 25% of rate
-> 100% match -> 25% of rate
-> 95-99 Fuzzy match -> 30% of rate
-> 50-94 Fuzzy match -> 60% of rate
+> ICE match -> 25% of rate  
+> 100% match -> 25% of rate  
+> 95-99 Fuzzy match -> 30% of rate  
+> 50-94 Fuzzy match -> 60% of rate  
 > 50-0 New words -> 100% of rate
 
 With Trans-Calc, you can define specific matrices for each client, and insert the word count for each type of match.

@@ -50,8 +50,6 @@ class TransCalcGui:
         if self.client_dict:
             self.create_matrix_rows()
 
-        self.add_new_client()
-
     def create_matrix_rows(self, event=None) -> None:
         self.matrix_rows_frame.grid(column=0, columnspan=3)
 
@@ -121,7 +119,7 @@ class AddClient:
         self.add_client_window = add_client_window
         self.add_client_window.resizable(False, False)
         self.add_client_window.title("Add Client")
-        self.add_client_window.geometry("400x600")
+        self.add_client_window.geometry("400x700")
 
         self.mainframe = ttk.Frame(self.add_client_window)
 
@@ -156,24 +154,26 @@ class AddClient:
         self.tm_match_discount = ttk.Entry(self.matrix_frame, width=8)
 
         self.button_frame = ttk.Frame(self.mainframe)
-        self.add_row_button = ttk.Button(self.button_frame, text="Add Row")
+        self.add_row_button = ttk.Button(
+            self.button_frame, command=self.add_matrix_row, text="Add Row")
         self.delete_row_button = ttk.Button(
             self.button_frame, text="Delete Row")
 
         self.create_ui_grid()
 
-        # self.header.pack()
-        # self.client_name_label.pack()
-        # self.client_name_entry.pack()
-        # self.client_name_entry.focus()
-        # self.client_currency_label.pack()
-        # self.client_currency_entry.pack()
-        # self.tm_matches_label.pack()
-        # self.matrix_row.pack()
-        # self.tm_match_range.pack()
-        # self.tm_match_discount.pack()
-        # self.add_row.pack()
-        # self.delete_row.pack()
+    def add_matrix_row(self) -> None:
+        new_row_num = self.matrix_frame.grid_size()[1]
+        if new_row_num >= 8:
+            return
+        new_row_tm_range = ttk.Entry(self.matrix_frame, width=8)
+        new_row_tm_discount = ttk.Entry(self.matrix_frame, width=8)
+        new_row_tm_range.grid(
+            sticky="ne", column=1, row=new_row_num, padx=(0, 30), pady=(0, 5))
+        new_row_tm_discount.grid(
+            sticky="nw", column=2, row=new_row_num, padx=(0, 0), pady=(0, 5))
+
+    def delete_matrix_row(self) -> None:
+        pass
 
     def create_ui_grid(self) -> None:
         self.header.grid(sticky="n", column=0, columnspan=3,
@@ -203,9 +203,9 @@ class AddClient:
         self.matrix_frame.grid(
             sticky="nw", column=1, columnspan=3, row=5, padx=(0, 0), pady=(0, 20))
         self.tm_match_range.grid(
-            sticky="ne", column=1, row=0, padx=(0, 30), pady=(0, 0))
+            sticky="ne", column=1, row=0, padx=(0, 30), pady=(0, 5))
         self.tm_match_discount.grid(
-            sticky="nw", column=2, row=0, padx=(0, 0), pady=(0, 0))
+            sticky="nw", column=2, row=0, padx=(0, 0), pady=(0, 5))
 
         self.button_frame.grid(sticky="nw", column=1, columnspan=2, row=6)
         self.add_row_button.grid(column=0, row=0)

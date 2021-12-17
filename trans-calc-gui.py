@@ -50,7 +50,9 @@ class TransCalcGui:
         if self.client_dict:
             self.create_matrix_rows()
 
-    def create_matrix_rows(self, event=None):
+        self.add_new_client()
+
+    def create_matrix_rows(self, event=None) -> None:
         self.matrix_rows_frame.grid(column=0, columnspan=3)
 
         tm_match_label = ttk.Label(
@@ -124,7 +126,7 @@ class AddClient:
         self.mainframe = ttk.Frame(self.add_client_window)
 
         self.header = ttk.Label(self.mainframe, text="Add Client",
-                                font=("TkDefaultFont", 18))
+                                font=("TkDefaultFont", 18), justify="center")
 
         self.client_name_label = ttk.Label(self.mainframe, text="Client Name")
         self.client_name_entry = ttk.Entry(
@@ -133,29 +135,83 @@ class AddClient:
         self.client_currency_label = ttk.Label(
             self.mainframe, text="Currency")
         self.client_currency_entry = ttk.Entry(
-            self.mainframe, width=10)
+            self.mainframe, width=8)
+        self.client_currency_example = ttk.Label(
+            self.mainframe, text="(ex. \"EUR\" or \"USD\")")
 
-        self.tm_matches_label = ttk.Label(
-            self.mainframe, text="TM Match Ranges & Discounts")
-        self.matrix_row = ttk.Frame(self.mainframe)
-        self.tm_match_range = ttk.Entry(self.matrix_row, width=20)
-        self.tm_match_discount = ttk.Entry(self.matrix_row, width=5)
+        self.client_full_rate_label = ttk.Label(
+            self.mainframe, text="Full Rate\nper Word")
+        self.client_full_rate_entry = ttk.Entry(
+            self.mainframe, width=8)
+        self.client_full_rate_example = ttk.Label(
+            self.mainframe, text="(ex. \"0.15\")")
 
-        self.add_row = ttk.Button(self.mainframe, text="Add Row")
-        self.delete_row = ttk.Button(self.mainframe, text="Delete Row")
+        self.tm_match_range_label = ttk.Label(
+            self.mainframe, text="TM Match\nRanges")
+        self.tm_match_discount_label = ttk.Label(
+            self.mainframe, text="Disccount\n(% of full price)")
 
-        self.header.pack()
-        self.client_name_label.pack()
-        self.client_name_entry.pack()
+        self.matrix_frame = ttk.Frame(self.mainframe)
+        self.tm_match_range = ttk.Entry(self.matrix_frame, width=8)
+        self.tm_match_discount = ttk.Entry(self.matrix_frame, width=8)
+
+        self.button_frame = ttk.Frame(self.mainframe)
+        self.add_row_button = ttk.Button(self.button_frame, text="Add Row")
+        self.delete_row_button = ttk.Button(
+            self.button_frame, text="Delete Row")
+
+        self.create_ui_grid()
+
+        # self.header.pack()
+        # self.client_name_label.pack()
+        # self.client_name_entry.pack()
+        # self.client_name_entry.focus()
+        # self.client_currency_label.pack()
+        # self.client_currency_entry.pack()
+        # self.tm_matches_label.pack()
+        # self.matrix_row.pack()
+        # self.tm_match_range.pack()
+        # self.tm_match_discount.pack()
+        # self.add_row.pack()
+        # self.delete_row.pack()
+
+    def create_ui_grid(self) -> None:
+        self.header.grid(sticky="n", column=0, columnspan=3,
+                         padx=(0, 0), pady=(30, 30))
+        self.client_name_label.grid(
+            sticky="ne", column=0, row=1, padx=(10, 20), pady=(0, 20))
+        self.client_name_entry.grid(
+            sticky="nw", column=1, columnspan=2, row=1, padx=(0, 0), pady=(0, 20))
+        self.client_currency_label.grid(
+            sticky="ne", column=0, row=2, padx=(10, 20), pady=(0, 20))
+        self.client_currency_entry.grid(
+            sticky="nw", column=1, row=2, padx=(0, 0), pady=(0, 20))
+        self.client_currency_example.grid(
+            sticky="nw", column=2, row=2, padx=(0, 20), pady=(0, 20))
+        self.client_full_rate_label.grid(
+            sticky="ne", column=0, row=3, padx=(10, 20), pady=(0, 30))
+        self.client_full_rate_entry.grid(
+            sticky="nw", column=1, row=3, padx=(0, 0), pady=(0, 30))
+        self.client_full_rate_example.grid(
+            sticky="nw", column=2, row=3, padx=(0, 20), pady=(0, 30))
+
+        self.tm_match_range_label.grid(
+            sticky="nw", column=1, row=4, padx=(0, 50), pady=(0, 5))
+        self.tm_match_discount_label.grid(
+            sticky="nw", column=2, row=4, padx=(0, 0), pady=(0, 5))
+
+        self.matrix_frame.grid(
+            sticky="nw", column=1, columnspan=3, row=5, padx=(0, 0), pady=(0, 20))
+        self.tm_match_range.grid(
+            sticky="ne", column=1, row=0, padx=(0, 30), pady=(0, 0))
+        self.tm_match_discount.grid(
+            sticky="nw", column=2, row=0, padx=(0, 0), pady=(0, 0))
+
+        self.button_frame.grid(sticky="nw", column=1, columnspan=2, row=6)
+        self.add_row_button.grid(column=0, row=0)
+        self.delete_row_button.grid(column=1, row=0, padx=(10, 0))
+
         self.client_name_entry.focus()
-        self.client_currency_label.pack()
-        self.client_currency_entry.pack()
-        self.tm_matches_label.pack()
-        self.matrix_row.pack()
-        self.tm_match_range.pack()
-        self.tm_match_discount.pack()
-        self.add_row.pack()
-        self.delete_row.pack()
 
 
 if __name__ == "__main__":

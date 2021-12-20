@@ -2,7 +2,7 @@ import json
 import tkinter
 import math
 from tkinter import ttk
-from typing import Dict, Any
+from typing import Dict, Any, Union
 
 
 class TransCalcGui:
@@ -101,7 +101,7 @@ class TransCalcGui:
 
     def add_new_client(self) -> None:
         add_client_window = tkinter.Toplevel()
-        add_client_content = AddClient(add_client_window)
+        add_client_content = AddClient(add_client_window, self.client_dict)
         add_client_content.mainframe.pack(fill="both", expand=True)
 
     def get_clients(self) -> Dict:
@@ -115,11 +115,12 @@ class TransCalcGui:
 
 
 class AddClient:
-    def __init__(self, add_client_window: tkinter.Toplevel) -> None:
+    def __init__(self, add_client_window: tkinter.Toplevel, client_dict) -> None:
         self.add_client_window = add_client_window
         self.add_client_window.resizable(False, False)
         self.add_client_window.title("Add Client")
         self.add_client_window.geometry("400x700")
+        self.client_dict = client_dict
 
         self.mainframe = ttk.Frame(self.add_client_window)
 
@@ -150,14 +151,9 @@ class AddClient:
             self.mainframe, text="Disccount\n(% of full price)")
 
         self.matrix_frame = ttk.Frame(self.mainframe)
-        self.tm_match_range = ttk.Entry(self.matrix_frame, width=8)
-        self.tm_match_discount = ttk.Entry(self.matrix_frame, width=8)
 
-        self.button_frame = ttk.Frame(self.mainframe)
-        self.add_row_button = ttk.Button(
-            self.button_frame, command=self.add_matrix_row, text="Add Row")
-        self.delete_row_button = ttk.Button(
-            self.button_frame, text="Delete Row")
+        self.save_client_button = ttk.Button(
+            self.mainframe, command=self.save_client, text="Save Client")
 
         self.create_ui_grid()
 
@@ -176,6 +172,7 @@ class AddClient:
         pass
 
     def create_ui_grid(self) -> None:
+        self.mainframe.rowconfigure(7, weight=1)
         self.header.grid(sticky="n", column=0, columnspan=3,
                          padx=(0, 0), pady=(30, 30))
         self.client_name_label.grid(
@@ -202,16 +199,54 @@ class AddClient:
 
         self.matrix_frame.grid(
             sticky="nw", column=1, columnspan=3, row=5, padx=(0, 0), pady=(0, 20))
-        self.tm_match_range.grid(
-            sticky="ne", column=1, row=0, padx=(0, 30), pady=(0, 5))
-        self.tm_match_discount.grid(
-            sticky="nw", column=2, row=0, padx=(0, 0), pady=(0, 5))
 
-        self.button_frame.grid(sticky="nw", column=1, columnspan=2, row=6)
-        self.add_row_button.grid(column=0, row=0)
-        self.delete_row_button.grid(column=1, row=0, padx=(10, 0))
+        for i in range(8):
+            tm_match_range = ttk.Entry(self.matrix_frame, width=8)
+            tm_match_discount = ttk.Entry(self.matrix_frame, width=8)
+            tm_match_range.grid(
+                sticky="ne", column=1, row=i, padx=(0, 30), pady=(0, 5))
+            tm_match_discount.grid(
+                sticky="nw", column=2, row=i, padx=(0, 0), pady=(0, 5))
+
+        self.save_client_button.grid(
+            sticky="se", column=2, row=7, padx=(0, 0), pady=(0, 20))
 
         self.client_name_entry.focus()
+
+    def save_client(self) -> None:
+        print(self.client_dict)
+        # Not sure why grid_slaves is returned backwards. Had to use reversed()
+        matrix_row_values = [value.get() for value in reversed(
+            self.matrix_frame.grid_slaves()) if value.get()]
+
+        ranges_and_discounts = {str(range): (int(discount) / 100) for range, discount in zip(
+            matrix_row_values[::2], matrix_row_values[1::2])}
+
+        client_name = self.client_name_entry.get()
+        client_info = {
+            "full_rate": float(self.client_full_rate_entry.get()),
+            "currency": self.client_currency_entry.get(),
+            "matrix": ranges_and_discounts
+        }
+
+        self.save_client_to_json(client_name, client_info)
+
+    def save_client_to_json(self, client_name: str, client_info) -> None:
+        self.client_dict[client_name] = client_info
+        client_data = {"clients": self.client_dict}
+
+        try:
+            with open("client-data.json", "w") as client_data_file:
+                client_dict: Dict[Any] = json.dump(
+                    client_data, client_data_file, indent=4)
+        except json.decoder.JSONDecodeError:
+            print("JSON empty")
+            return None
+
+        self.clear_matrix_rows()
+
+    def clear_matrix_rows(self):
+        pass
 
 
 if __name__ == "__main__":

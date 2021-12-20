@@ -25,15 +25,12 @@ class TransCalcGui:
             self.mainframe, state="readonly")
 
         if self.client_dict:
-            self.clients_dropdown["values"] = list(self.client_dict.keys())
+            self.update_client_dropdown()
         else:
             self.clients_dropdown["values"] = None
 
-        if self.client_dict:
-            self.clients_dropdown.set(list(self.client_dict.keys())[0])
-
         self.clients_dropdown.bind(
-            "<<ComboboxSelected>>", self.create_matrix_rows)
+            "<<ComboboxSelected>>", self.update_matrix_rows)
 
         self.button_frame = ttk.Frame(self.mainframe)
 
@@ -42,15 +39,17 @@ class TransCalcGui:
         self.edit_client_button = ttk.Button(
             self.button_frame, text="Edit Client")
         self.delete_client_button = ttk.Button(
-            self.button_frame, text="Delete Client")
+            self.button_frame, command=self.delete_client, text="Delete Client")
 
         self.matrix_rows_frame = ttk.Frame(self.mainframe)
 
         self.create_ui_grid()
         if self.client_dict:
-            self.create_matrix_rows()
+            self.update_matrix_rows()
 
-    def create_matrix_rows(self, event=None) -> None:
+    def update_matrix_rows(self, event=None) -> None:
+        for row in self.matrix_rows_frame.grid_slaves():
+            row.destroy()
         self.matrix_rows_frame.grid(column=0, columnspan=3)
 
         tm_match_label = ttk.Label(
@@ -67,21 +66,25 @@ class TransCalcGui:
         match_discount_label.grid(sticky="e", column=2, row=0, padx=(0, 30), pady=(
             0, 30))
 
-        for enum, matrix_row in enumerate(self.client_dict[self.clients_dropdown.get()]["matrix"], start=1):
-            discount_current_row = str(int(self.client_dict[self.clients_dropdown.get(
-            )]["matrix"][matrix_row] * 100))
-            row_percentage_label = ttk.Label(
-                self.matrix_rows_frame, text=matrix_row + "%")
-            row_word_count_input = ttk.Entry(self.matrix_rows_frame, width=25)
-            row_match_discount_label = ttk.Label(
-                self.matrix_rows_frame, text=f"({discount_current_row}% of full rate)")
+        try:
+            for enum, matrix_row in enumerate(self.client_dict[self.clients_dropdown.get()]["matrix"], start=1):
+                discount_current_row = str(int(self.client_dict[self.clients_dropdown.get(
+                )]["matrix"][matrix_row] * 100))
+                row_percentage_label = ttk.Label(
+                    self.matrix_rows_frame, text=matrix_row + "%")
+                row_word_count_input = ttk.Entry(
+                    self.matrix_rows_frame, width=25)
+                row_match_discount_label = ttk.Label(
+                    self.matrix_rows_frame, text=f"({discount_current_row}% of full rate)")
 
-            row_percentage_label.grid(
-                sticky="nes", column=0, row=enum, padx=(0, 30), pady=(0, 20))
-            row_word_count_input.grid(sticky="wn", column=1,
-                                      row=enum, padx=(0, 30))
-            row_match_discount_label.grid(sticky="nw", column=2,
+                row_percentage_label.grid(
+                    sticky="nes", column=0, row=enum, padx=(0, 30), pady=(0, 20))
+                row_word_count_input.grid(sticky="wn", column=1,
                                           row=enum, padx=(0, 30))
+                row_match_discount_label.grid(sticky="nw", column=2,
+                                              row=enum, padx=(0, 30))
+        except KeyError:
+            return
 
     def create_ui_grid(self) -> None:
         self.mainframe.columnconfigure(3)
@@ -101,8 +104,21 @@ class TransCalcGui:
 
     def add_new_client(self) -> None:
         add_client_window = tkinter.Toplevel()
-        add_client_content = AddClient(add_client_window, self.client_dict)
+        add_client_content = AddClientWindow(
+            add_client_window, self.client_dict)
         add_client_content.mainframe.pack(fill="both", expand=True)
+        add_client_window.transient(self.root)
+        add_client_window.wait_window()
+        self.update_client_dropdown()
+        self.update_matrix_rows()
+
+    def delete_client(self) -> None:
+        current_client = self.clients_dropdown.get()
+        # TODO: show warning here
+        del self.client_dict[current_client]
+        save_client_data_to_json(self.client_dict)
+        self.update_client_dropdown()
+        self.update_matrix_rows()
 
     def get_clients(self) -> Dict:
         try:
@@ -113,8 +129,15 @@ class TransCalcGui:
             print("JSON empty")
             return None
 
+    def update_client_dropdown(self):
+        self.clients_dropdown["values"] = list(self.client_dict.keys())
+        try:
+            self.clients_dropdown.set(list(self.client_dict.keys())[0])
+        except IndexError:
+            self.clients_dropdown.set("")
 
-class AddClient:
+
+class AddClientWindow:
     def __init__(self, add_client_window: tkinter.Toplevel, client_dict) -> None:
         self.add_client_window = add_client_window
         self.add_client_window.resizable(False, False)
@@ -151,9 +174,12 @@ class AddClient:
             self.mainframe, text="Disccount\n(% of full price)")
 
         self.matrix_frame = ttk.Frame(self.mainframe)
+        self.toast_message_frame = ttk.Frame(self.mainframe)
 
         self.save_client_button = ttk.Button(
             self.mainframe, command=self.save_client, text="Save Client")
+
+        # TODO: Bind enter to save button
 
         self.create_ui_grid()
 
@@ -208,13 +234,14 @@ class AddClient:
             tm_match_discount.grid(
                 sticky="nw", column=2, row=i, padx=(0, 0), pady=(0, 5))
 
+        self.toast_message_frame.grid(column=0, columnspan=3, row=7)
+
         self.save_client_button.grid(
-            sticky="se", column=2, row=7, padx=(0, 0), pady=(0, 20))
+            sticky="se", column=2, row=8, padx=(0, 0), pady=(0, 20))
 
         self.client_name_entry.focus()
 
     def save_client(self) -> None:
-        print(self.client_dict)
         # Not sure why grid_slaves is returned backwards. Had to use reversed()
         matrix_row_values = [value.get() for value in reversed(
             self.matrix_frame.grid_slaves()) if value.get()]
@@ -228,25 +255,38 @@ class AddClient:
             "currency": self.client_currency_entry.get(),
             "matrix": ranges_and_discounts
         }
-
-        self.save_client_to_json(client_name, client_info)
-
-    def save_client_to_json(self, client_name: str, client_info) -> None:
         self.client_dict[client_name] = client_info
-        client_data = {"clients": self.client_dict}
-
-        try:
-            with open("client-data.json", "w") as client_data_file:
-                client_dict: Dict[Any] = json.dump(
-                    client_data, client_data_file, indent=4)
-        except json.decoder.JSONDecodeError:
-            print("JSON empty")
-            return None
-
+        save_client_data_to_json(self.client_dict)
         self.clear_matrix_rows()
+        self.display_success_message(client_name)
 
     def clear_matrix_rows(self):
-        pass
+        self.client_name_entry.delete(0, "end")
+        self.client_name_entry.delete(0, "end")
+        self.client_currency_entry.delete(0, "end")
+        self.client_full_rate_entry.delete(0, "end")
+
+        for value in self.matrix_frame.grid_slaves():
+            value.delete(0, "end")
+
+    def display_success_message(self, client_name):
+        saved_success_label = ttk.Label(
+            self.toast_message_frame, text=f"{client_name} was saved.", font=("TkDefaultFont", 16), style="Success.TLabel")
+        saved_success_label.tk.eval(
+            "ttk::style configure Success.TLabel -foreground green")
+        saved_success_label.grid(
+            sticky="se", column=0, row=0, padx=(0, 0), pady=(0, 0))
+
+
+def save_client_data_to_json(client_dict) -> None:
+    client_data = {"clients": client_dict}
+    try:
+        with open("client-data.json", "w") as client_data_file:
+            client_dict: Dict[Any] = json.dump(
+                client_data, client_data_file, indent=4)
+    except json.decoder.JSONDecodeError:
+        print("JSON empty")
+        return None
 
 
 if __name__ == "__main__":

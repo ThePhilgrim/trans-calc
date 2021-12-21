@@ -2,7 +2,15 @@ import json
 import tkinter
 import transcalc
 from tkinter import ttk
-from typing import Dict, Any, Union
+from typing import Dict, Any, TypedDict, Optional
+
+ClientData = TypedDict(
+    "ClientData",
+    {
+        "full_rate": float,
+        "currency": str,
+        "matrix": Dict[str, float]
+    })
 
 
 class TransCalcGui:

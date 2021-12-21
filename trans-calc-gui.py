@@ -37,7 +37,7 @@ class TransCalcGui:
         self.add_client_button = ttk.Button(
             self.button_frame, command=self.add_new_client, text="Add Client")
         self.edit_client_button = ttk.Button(
-            self.button_frame, text="Edit Client")
+            self.button_frame, command=self.edit_client, text="Edit Client")
         self.delete_client_button = ttk.Button(
             self.button_frame, command=self.delete_client, text="Delete Client")
 
@@ -112,6 +112,18 @@ class TransCalcGui:
         self.update_client_dropdown()
         self.update_matrix_rows()
 
+    def edit_client(self) -> None:
+        if self.clients_dropdown.get() == None:
+            return
+        edit_client_window = tkinter.Toplevel()
+        edit_client_content = EditClientWindow(
+            edit_client_window, self.client_dict, self.clients_dropdown.get())
+        edit_client_content.mainframe.pack(fill="both", expand=True)
+        edit_client_window.transient(self.root)
+        edit_client_window.wait_window()
+        self.update_client_dropdown()
+        self.update_matrix_rows()
+
     def delete_client(self) -> None:
         current_client = self.clients_dropdown.get()
         # TODO: show warning here
@@ -138,14 +150,14 @@ class TransCalcGui:
 
 
 class AddClientWindow:
-    def __init__(self, add_client_window: tkinter.Toplevel, client_dict) -> None:
-        self.add_client_window = add_client_window
-        self.add_client_window.resizable(False, False)
-        self.add_client_window.title("Add Client")
-        self.add_client_window.geometry("400x700")
+    def __init__(self, window: tkinter.Toplevel, client_dict) -> None:
+        self.window = window
+        self.window.resizable(False, False)
+        self.window.title("Add Client")
+        self.window.geometry("400x700")
         self.client_dict = client_dict
 
-        self.mainframe = ttk.Frame(self.add_client_window)
+        self.mainframe = ttk.Frame(self.window)
 
         self.header = ttk.Label(self.mainframe, text="Add Client",
                                 font=("TkDefaultFont", 18), justify="center")
@@ -276,6 +288,38 @@ class AddClientWindow:
             "ttk::style configure Success.TLabel -foreground green")
         saved_success_label.grid(
             sticky="se", column=0, row=0, padx=(0, 0), pady=(0, 0))
+
+
+class EditClientWindow(AddClientWindow):
+    def __init__(self, window, client_dict, currently_selected_client):
+        super().__init__(window, client_dict)
+        self.currently_selected_client = currently_selected_client
+        print(self.currently_selected_client)
+        self.window.title("Edit Client")
+        self.header["text"] = "Edit Client"
+
+        self.populate_data_fields()
+
+    def populate_data_fields(self):
+        self.client_name_entry.insert(0, self.currently_selected_client)
+        self.client_currency_entry.insert(
+            0, self.client_dict[self.currently_selected_client]["currency"])
+        self.client_full_rate_entry.insert(
+            0, self.client_dict[self.currently_selected_client]["full_rate"])
+
+        range_discounts = [
+            value for tuple in self.client_dict[self.currently_selected_client]["matrix"].items() for value in tuple]
+
+        matrix_entry_fields = [entry for entry in reversed(
+            self.matrix_frame.grid_slaves())]
+
+        for enum, value in enumerate(range_discounts):
+
+            if isinstance(value, float):
+                float_to_percentage = int(value * 100)
+                matrix_entry_fields[enum].insert(0, float_to_percentage)
+            else:
+                matrix_entry_fields[enum].insert(0, value)
 
 
 def save_client_data_to_json(client_dict) -> None:

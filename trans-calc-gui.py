@@ -30,7 +30,7 @@ class TransCalcGui:
             self.clients_dropdown["values"] = None
 
         self.clients_dropdown.bind(
-            "<<ComboboxSelected>>", self.update_matrix_rows)
+            "<<ComboboxSelected>>", lambda e: self.update_matrix_rows())
 
         self.button_frame = ttk.Frame(self.mainframe)
 
@@ -47,7 +47,7 @@ class TransCalcGui:
         if self.client_dict:
             self.update_matrix_rows()
 
-    def update_matrix_rows(self, event=None) -> None:
+    def update_matrix_rows(self) -> None:
         for row in self.matrix_rows_frame.grid_slaves():
             row.destroy()
         self.matrix_rows_frame.grid(column=0, columnspan=3)
@@ -191,7 +191,7 @@ class AddClientWindow:
         self.save_client_button = ttk.Button(
             self.mainframe, command=self.save_client, text="Save Client")
 
-        # TODO: Bind enter to save button
+        self.window.bind("<Return>", lambda e: self.save_client())
 
         self.create_ui_grid()
 

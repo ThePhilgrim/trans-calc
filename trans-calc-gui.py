@@ -1,6 +1,6 @@
 import json
 import tkinter
-import math
+import transcalc
 from tkinter import ttk
 from typing import Dict, Any, Union
 
@@ -132,14 +132,15 @@ class TransCalcGui:
         self.update_client_dropdown()
         self.update_matrix_rows()
 
-    def get_clients(self) -> Dict:
+    def get_clients(self) -> Optional[Dict[str, ClientData]]:
+        config_dir = transcalc.get_user_config_dir()
         try:
-            with open("client-data.json", "r") as client_data:
-                client_dict: Dict[Any] = json.load(client_data)["clients"]
-            return client_dict
+            with open(config_dir / "client-data.json", "r") as client_data:
+                return json.load(client_data)["clients"]  # type: ignore
         except json.decoder.JSONDecodeError:
-            print("JSON empty")
             return None
+        except FileNotFoundError:
+            return {}
 
     def update_client_dropdown(self):
         self.clients_dropdown["values"] = list(self.client_dict.keys())
@@ -323,13 +324,13 @@ class EditClientWindow(AddClientWindow):
 
 
 def save_client_data_to_json(client_dict) -> None:
+    config_dir = transcalc.get_user_config_dir()
     client_data = {"clients": client_dict}
     try:
-        with open("client-data.json", "w") as client_data_file:
+        with open(config_dir / "client-data.json", "w") as client_data_file:
             client_dict: Dict[Any] = json.dump(
                 client_data, client_data_file, indent=4)
     except json.decoder.JSONDecodeError:
-        print("JSON empty")
         return None
 
 

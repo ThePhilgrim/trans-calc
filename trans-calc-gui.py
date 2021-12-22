@@ -303,7 +303,6 @@ class EditClientWindow(AddClientWindow):
     def __init__(self, window, client_dict, currently_selected_client):
         super().__init__(window, client_dict)
         self.currently_selected_client = currently_selected_client
-        print(self.currently_selected_client)
         self.window.title("Edit Client")
         self.header["text"] = "Edit Client"
 

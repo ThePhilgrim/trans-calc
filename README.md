@@ -16,6 +16,11 @@ With Trans-Calc, you can define specific matrices for each client, and insert th
 
 If you would like to see a specific feature, please create an issue.
 
+## How to use Trans-Calc
+
+1. Clone the repository with `git clone https://github.com/ThePhilgrim/trans-calc`.
+2. Install the necessary dependencies with `pip install -r requirements.txt` (if you want to do this in a virtual environment, see step two [below](https://github.com/ThePhilgrim/trans-calc#for-developers))
+
 ## For developers
 
 If you would like to contribute to Trans-Calc, thank you! You are most welcome to do so.
@@ -27,5 +32,5 @@ To start, please follow these steps:
    - Mac/Linux: `python3 -m venv env` -> `source env/bin/activate`
    - Windows: `py -m venv env` -> `env\Scripts\activate`
 3. Download the necessary dependencies for development
-   - Mac/Linux/Windows `pip install -r requirements-dev.txt`
+   - Mac/Linux/Windows `pip install -r requirements-dev.txt requirements.txt`
 4. Happy coding!

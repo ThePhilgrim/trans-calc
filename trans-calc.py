@@ -21,19 +21,6 @@ def get_user_config_dir():
     return config_dir
 
 
-def calculate_full_price(stringvars, client):
-    tm_match_ranges = list(client["matrix"].keys())
-    full_price = 0
-    filled_in_entries = [
-        stringvar for stringvar in stringvars if stringvar.get()]
-
-    for entry in filled_in_entries:
-        full_price += round(client["full_rate"] * client["matrix"]
-                            [tm_match_ranges[stringvars.index(entry)]] * int(entry.get()), 3)
-
-    print(full_price)
-
-
 class TransCalc:
     def __init__(self) -> None:
         self.client_dict = self.get_clients()
@@ -73,6 +60,14 @@ class TransCalc:
         self.matrix_rows_frame = ttk.Frame(self.mainframe)
         self.matrix_stringvars = []
 
+        self.full_price_sv = tkinter.StringVar()
+
+        self.full_price_frame = ttk.Frame(self.mainframe)
+        self.full_price_label = ttk.Label(
+            self.full_price_frame, text="Full price:", font=("TkDefaultFont", 18))
+        # self.calculated_full_price = ttk.Label(
+        #     self.full_price_frame, textvariable=full_price_sv, font=("TkDefaultFont", 18))
+
         self.create_ui_grid()
         if self.client_dict:
             self.update_matrix_rows()
@@ -100,8 +95,9 @@ class TransCalc:
         try:
             for enum, matrix_row in enumerate(self.client_dict[self.clients_dropdown.get()]["matrix"], start=1):
                 sv = tkinter.StringVar()
+                # tkinter trace_add uses 3 useless arguments (*args)
                 sv.trace_add(
-                    "write", lambda *args: calculate_full_price(self.matrix_stringvars, self.client_dict[self.clients_dropdown.get()]))
+                    "write", lambda *args: self.calculate_full_price())
                 self.matrix_stringvars.append(sv)
                 discount_current_row = str(int(self.client_dict[self.clients_dropdown.get(
                 )]["matrix"][matrix_row] * 100))
@@ -122,6 +118,10 @@ class TransCalc:
                                               row=enum, padx=(0, 30))
         except KeyError:
             return
+
+        self.full_price_frame.grid(sticky="we", column=0, columnspan=4)
+        self.full_price_label.grid(
+            sticky="w", column=0, row=0, padx=(120, 0), pady=(40, 0))
 
     def create_ui_grid(self) -> None:
         self.mainframe.columnconfigure(3)
@@ -185,6 +185,30 @@ class TransCalc:
             self.clients_dropdown.set(list(self.client_dict.keys())[0])
         except IndexError:
             self.clients_dropdown.set("")
+
+    def calculate_full_price(self):
+        client = self.client_dict[self.clients_dropdown.get()]
+
+        tm_match_ranges = list(client["matrix"].keys())
+        full_price = 0
+        filled_in_entries = [
+            stringvar for stringvar in self.matrix_stringvars if stringvar.get()]
+
+        for entry in filled_in_entries:
+            full_price += round(client["full_rate"] * client["matrix"]
+                                [tm_match_ranges[self.matrix_stringvars.index(entry)]] * int(entry.get()), 3)
+
+        if str(full_price).endswith(".0"):
+            parsed_full_price = int(full_price)
+        else:
+            parsed_full_price = round(full_price, 2)
+
+        self.full_price_sv.set(
+            f'{client["currency"]} {str(parsed_full_price)}')
+        calculated_full_price = ttk.Label(
+            self.full_price_frame, textvariable=self.full_price_sv, font=("TkDefaultFont", 20))
+        calculated_full_price.grid(
+            sticky="w", column=1, row=0, padx=(20, 0), pady=(40, 0))
 
 
 class AddClientWindow:

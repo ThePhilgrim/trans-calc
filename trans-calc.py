@@ -116,6 +116,8 @@ class TransCalc:
         self.full_price_frame.grid(sticky="we", column=0, columnspan=4)
         self.full_price_label.grid(sticky="w", column=0, row=0, padx=(120, 0), pady=(40, 0))
 
+        self.matrix_entries[0].focus_set()
+
     def add_new_client(self) -> None:
         add_client_window = tkinter.Toplevel()
         add_client_content = AddClientWindow(add_client_window, self.client_dict)

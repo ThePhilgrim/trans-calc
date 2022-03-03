@@ -61,7 +61,7 @@ class TransCalc:
 
     def create_ui_grid(self) -> None:
         self.mainframe.columnconfigure(3)
-        self.header.grid(sticky="n", column=0, columnspan=3, padx=(0, 0), pady=(30, 30))
+        self.header.grid(sticky="n", column=0, columnspan=3, padx=(0, 0), pady=(30, 10))
         self.clients_label.grid(sticky="we", column=0, columnspan=1, padx=(20, 0), pady=(30, 10))
 
         self.clients_dropdown.grid(sticky="we", column=0, columnspan=1, padx=(20, 0), pady=(0, 20))

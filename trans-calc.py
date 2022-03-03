@@ -191,6 +191,8 @@ class TransCalc:
         for field in self.matrix_entries:
             field.delete(0, "end")
 
+        self.matrix_entries[0].focus_set()
+
 
 class AddClientWindow:
     def __init__(self, window: tkinter.Toplevel, client_dict) -> None:

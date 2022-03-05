@@ -7,13 +7,7 @@ from typing import Dict, Any, TypedDict, Optional
 
 ClientData = TypedDict("ClientData", {"full_rate": float, "currency": str, "matrix": Dict[str, float]})
 
-
-def get_user_config_dir():
-    config_dir = Path(appdirs.user_config_dir("Trans-Calc", "ThePhilgrim"))
-    config_dir.mkdir(parents=True, exist_ok=True)
-    return config_dir
-
-
+# Main Window
 class TransCalc:
     def __init__(self) -> None:
         self.client_dict = self.get_clients()
@@ -49,8 +43,10 @@ class TransCalc:
 
         self.full_price_sv = tkinter.StringVar()
 
-        self.clear_button_frame = ttk.Frame(self.mainframe)
-        self.clear_button = ttk.Button(self.clear_button_frame, command=self.clear_fields, text="Clear Fields")
+        self.secondary_frame = ttk.Frame(self.mainframe)
+        self.total_words_sv = tkinter.StringVar()
+        self.total_word_label = ttk.Label(self.secondary_frame, text="Total words:")
+        self.clear_button = ttk.Button(self.secondary_frame, command=self.clear_fields, text="Clear Fields")
 
         self.full_price_frame = ttk.Frame(self.mainframe)
         self.full_price_label = ttk.Label(self.full_price_frame, text="Full price:", font=("TkDefaultFont", 18))
@@ -110,7 +106,8 @@ class TransCalc:
         except KeyError:
             return
 
-        self.clear_button_frame.grid(sticky="we", column=0, columnspan=3)
+        self.secondary_frame.grid(sticky="we", column=0, columnspan=3)
+        self.total_word_label.grid(column=0, row=0)
         self.clear_button.grid(padx=(200, 0))
 
         self.full_price_frame.grid(sticky="we", column=0, columnspan=4)
@@ -189,6 +186,18 @@ class TransCalc:
         )
         calculated_full_price.grid(sticky="w", column=1, row=0, padx=(20, 0), pady=(40, 0))
 
+        self.calculate_total_words()
+
+    def calculate_total_words(self) -> None:
+        total_words = 0
+        for field in self.matrix_entries:
+            if field.get():
+                total_words += int(field.get())
+
+        self.total_words_sv.set(total_words)
+        calculated_total_words = ttk.Label(self.secondary_frame, textvariable=self.total_words_sv)
+        calculated_total_words.grid(column=1, row=0)
+
     def clear_fields(self) -> None:
         for field in self.matrix_entries:
             field.delete(0, "end")
@@ -196,6 +205,7 @@ class TransCalc:
         self.matrix_entries[0].focus_set()
 
 
+# Client Windows
 class AddClientWindow:
     def __init__(self, window: tkinter.Toplevel, client_dict) -> None:
         self.window = window
@@ -339,6 +349,12 @@ class EditClientWindow(AddClientWindow):
                 matrix_entry_fields[enum].insert(0, float_to_percentage)
             else:
                 matrix_entry_fields[enum].insert(0, value)
+
+
+def get_user_config_dir():
+    config_dir = Path(appdirs.user_config_dir("Trans-Calc", "ThePhilgrim"))
+    config_dir.mkdir(parents=True, exist_ok=True)
+    return config_dir
 
 
 def save_client_data_to_json(client_dict) -> None:

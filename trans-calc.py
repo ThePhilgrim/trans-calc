@@ -67,8 +67,8 @@ class TransCalc:
     def update_matrix_rows(self) -> None:
         self.matrix_stringvars = []
         self.matrix_entries = []
-        for row in self.matrix_rows_frame.grid_slaves():
-            row.destroy()
+        for entry in self.matrix_rows_frame.grid_slaves():
+            entry.destroy()
         self.matrix_rows_frame.grid(column=0, columnspan=3)
 
         tm_match_label = ttk.Label(self.matrix_rows_frame, text="TM Match", font=("TkDefaultFont", 16))
@@ -225,8 +225,10 @@ class AddClientWindow:
         self.client_currency_entry = ttk.Entry(self.mainframe, width=8)
         self.client_currency_example = ttk.Label(self.mainframe, text='(ex. "EUR" or "USD")')
 
-        self.client_full_rate_label = ttk.Label(self.mainframe, text="Full Rate\nper Word")
-        self.client_full_rate_entry = ttk.Entry(self.mainframe, width=8)
+        self.client_full_rate_label = ttk.Label(self.mainframe, text="Full Rate\nper Word\n(required)")
+        self.client_full_rate_var = tkinter.StringVar()
+        self.client_full_rate_var.trace_add("write", self.set_save_button_disabled)
+        self.client_full_rate_entry = ttk.Entry(self.mainframe, width=8, textvariable=self.client_full_rate_var)
         self.client_full_rate_example = ttk.Label(self.mainframe, text='(ex. "0.15")')
 
         self.tm_match_range_label = ttk.Label(self.mainframe, text="TM Match\nRanges")
@@ -239,31 +241,23 @@ class AddClientWindow:
 
         self.window.bind("<Return>", lambda e: self.save_client())
 
+        self.range_vars = []
+        self.discount_vars = []
         self.create_ui_grid()
 
-    def add_matrix_row(self) -> None:
-        new_row_num = self.matrix_frame.grid_size()[1]
-        if new_row_num >= 8:
-            return
-        new_row_tm_range = ttk.Entry(self.matrix_frame, width=8)
-        new_row_tm_discount = ttk.Entry(self.matrix_frame, width=8)
-        new_row_tm_range.grid(sticky="ne", column=1, row=new_row_num, padx=(0, 30), pady=(0, 5))
-        new_row_tm_discount.grid(sticky="nw", column=2, row=new_row_num, padx=(0, 0), pady=(0, 5))
-
-    def delete_matrix_row(self) -> None:
-        pass
+        self.set_save_button_disabled()
 
     def create_ui_grid(self) -> None:
         self.mainframe.rowconfigure(7, weight=1)
         self.header.grid(sticky="n", column=0, columnspan=3, padx=(0, 0), pady=(30, 30))
-        self.client_name_label.grid(sticky="ne", column=0, row=1, padx=(10, 20), pady=(0, 20))
-        self.client_name_entry.grid(sticky="nw", column=1, columnspan=2, row=1, padx=(0, 0), pady=(0, 20))
-        self.client_currency_label.grid(sticky="ne", column=0, row=2, padx=(10, 20), pady=(0, 20))
-        self.client_currency_entry.grid(sticky="nw", column=1, row=2, padx=(0, 0), pady=(0, 20))
-        self.client_currency_example.grid(sticky="nw", column=2, row=2, padx=(0, 20), pady=(0, 20))
-        self.client_full_rate_label.grid(sticky="ne", column=0, row=3, padx=(10, 20), pady=(0, 30))
-        self.client_full_rate_entry.grid(sticky="nw", column=1, row=3, padx=(0, 0), pady=(0, 30))
-        self.client_full_rate_example.grid(sticky="nw", column=2, row=3, padx=(0, 20), pady=(0, 30))
+        self.client_name_label.grid(sticky="e", column=0, row=1, padx=(10, 20), pady=(0, 20))
+        self.client_name_entry.grid(sticky="w", column=1, columnspan=2, row=1, padx=(0, 0), pady=(0, 20))
+        self.client_currency_label.grid(sticky="e", column=0, row=2, padx=(10, 20), pady=(0, 20))
+        self.client_currency_entry.grid(sticky="w", column=1, row=2, padx=(0, 0), pady=(0, 20))
+        self.client_currency_example.grid(sticky="w", column=2, row=2, padx=(0, 20), pady=(0, 20))
+        self.client_full_rate_label.grid(sticky="e", column=0, row=3, padx=(10, 20), pady=(0, 30))
+        self.client_full_rate_entry.grid(sticky="w", column=1, row=3, padx=(0, 0), pady=(0, 30))
+        self.client_full_rate_example.grid(sticky="w", column=2, row=3, padx=(0, 20), pady=(0, 30))
 
         self.tm_match_range_label.grid(sticky="nw", column=1, row=4, padx=(0, 50), pady=(0, 5))
         self.tm_match_discount_label.grid(sticky="nw", column=2, row=4, padx=(0, 0), pady=(0, 5))
@@ -271,10 +265,19 @@ class AddClientWindow:
         self.matrix_frame.grid(sticky="nw", column=1, columnspan=3, row=5, padx=(0, 0), pady=(0, 20))
 
         for i in range(8):
-            tm_match_range = ttk.Entry(self.matrix_frame, width=8)
-            tm_match_discount = ttk.Entry(self.matrix_frame, width=8)
-            tm_match_range.grid(sticky="ne", column=1, row=i, padx=(0, 30), pady=(0, 5))
-            tm_match_discount.grid(sticky="nw", column=2, row=i, padx=(0, 0), pady=(0, 5))
+            range_var = tkinter.StringVar()
+            discount_var = tkinter.StringVar()
+            self.range_vars.append(range_var)
+            self.discount_vars.append(discount_var)
+
+            # Update button disabled-ness when entry contents change
+            range_var.trace_add("write", self.set_save_button_disabled)
+            discount_var.trace_add("write", self.set_save_button_disabled)
+
+            range_entry = ttk.Entry(self.matrix_frame, width=8, textvariable=range_var)
+            discount_entry = ttk.Entry(self.matrix_frame, width=8, textvariable=discount_var)
+            range_entry.grid(sticky="ne", column=1, row=i, padx=(0, 30), pady=(0, 5))
+            discount_entry.grid(sticky="nw", column=2, row=i, padx=(0, 0), pady=(0, 5))
 
         self.toast_message_frame.grid(column=0, columnspan=3, row=7)
 
@@ -282,22 +285,41 @@ class AddClientWindow:
 
         self.client_name_entry.focus()
 
-    def save_client(self) -> None:
-        # Not sure why grid_slaves is returned backwards. Had to use reversed()
-        matrix_row_values = [value.get() for value in reversed(self.matrix_frame.grid_slaves()) if value.get()]
+    def get_client_data(self) -> Optional[ClientData]:
+        ranges_and_discounts = {}
+        for range_var, discount_var in zip(self.range_vars, self.discount_vars):
+            if range_var.get() and discount_var.get():
+                try:
+                    discount = int(discount_var.get())
+                except ValueError:
+                    return None
+                ranges_and_discounts[range_var.get()] = discount / 100
+            elif range_var.get() or discount_var.get():
+                # One entry in the row is empty but the other isn't
+                return None
 
-        ranges_and_discounts = {
-            str(range): (int(discount) / 100)
-            for range, discount in zip(matrix_row_values[::2], matrix_row_values[1::2])
-        }
+        try:
+            full_rate = float(self.client_full_rate_var.get().replace(",", "."))
+        except ValueError:
+            return None
 
-        client_name = self.client_name_entry.get()
-        client_info = {
-            "full_rate": float(self.client_full_rate_entry.get()),
+        return {
+            "full_rate": full_rate,
             "currency": self.client_currency_entry.get(),
             "matrix": ranges_and_discounts,
         }
-        self.client_dict[client_name] = client_info
+
+    def set_save_button_disabled(self, *unnecessary_args: object) -> None:
+        if self.get_client_data() is None:
+            self.save_client_button.config(state="disabled")
+        else:
+            self.save_client_button.config(state="normal")
+
+    def save_client(self) -> None:
+        client_name = self.client_name_entry.get()
+        client_data = self.get_client_data()
+        assert client_data is not None
+        self.client_dict[client_name] = client_data
         save_client_data_to_json(self.client_dict)
         self.clear_matrix_rows()
         self.display_success_message(client_name)
@@ -306,10 +328,9 @@ class AddClientWindow:
         self.client_name_entry.delete(0, "end")
         self.client_name_entry.delete(0, "end")
         self.client_currency_entry.delete(0, "end")
-        self.client_full_rate_entry.delete(0, "end")
-
-        for value in self.matrix_frame.grid_slaves():
-            value.delete(0, "end")
+        self.client_full_rate_var.set("")
+        for var in self.range_vars + self.discount_vars:
+            var.set("")
 
     def display_success_message(self, client_name):
         saved_success_label = ttk.Label(
@@ -334,21 +355,13 @@ class EditClientWindow(AddClientWindow):
     def populate_data_fields(self):
         self.client_name_entry.insert(0, self.currently_selected_client)
         self.client_currency_entry.insert(0, self.client_dict[self.currently_selected_client]["currency"])
-        self.client_full_rate_entry.insert(0, self.client_dict[self.currently_selected_client]["full_rate"])
+        self.client_full_rate_var.set(self.client_dict[self.currently_selected_client]["full_rate"])
 
-        range_discounts = [
-            value for tuple in self.client_dict[self.currently_selected_client]["matrix"].items() for value in tuple
-        ]
-
-        matrix_entry_fields = [entry for entry in reversed(self.matrix_frame.grid_slaves())]
-
-        for enum, value in enumerate(range_discounts):
-
-            if isinstance(value, float):
-                float_to_percentage = int(value * 100)
-                matrix_entry_fields[enum].insert(0, float_to_percentage)
-            else:
-                matrix_entry_fields[enum].insert(0, value)
+        key_value_pairs = self.client_dict[self.currently_selected_client]["matrix"].items()
+        for enum, pair in enumerate(key_value_pairs):
+            key, value = pair
+            self.range_vars[enum].set(key)
+            self.discount_vars[enum].set(int(value * 100))
 
 
 def get_user_config_dir():

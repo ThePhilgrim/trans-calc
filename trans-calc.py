@@ -230,7 +230,7 @@ class AddClientWindow:
         self.client_full_rate_example = ttk.Label(self.mainframe, text='(ex. "0.15")')
 
         self.tm_match_range_label = ttk.Label(self.mainframe, text="TM Match\nRanges")
-        self.tm_match_discount_label = ttk.Label(self.mainframe, text="Disccount\n(% of full price)")
+        self.tm_match_discount_label = ttk.Label(self.mainframe, text="Discount\n(% of full price)")
 
         self.matrix_frame = ttk.Frame(self.mainframe)
         self.toast_message_frame = ttk.Frame(self.mainframe)

@@ -19,9 +19,7 @@ class TransCalc:
         self.mainframe = ttk.Frame(self.root)
         self.mainframe.pack(fill="both", expand=True)
 
-        self.header = ttk.Label(self.mainframe, text="Trans-Calc", font=("TkDefaultFont", 18), justify="center")
-
-        self.clients_label = ttk.Label(self.mainframe, text="Client", font=("TkDefaultFont", 16))
+        self.clients_label = ttk.Label(self.mainframe, text="Client", font=("TkDefaultFont", 14))
         self.clients_dropdown = ttk.Combobox(self.mainframe, state="readonly")
 
         if self.client_dict:
@@ -57,8 +55,7 @@ class TransCalc:
 
     def create_ui_grid(self) -> None:
         self.mainframe.columnconfigure(3)
-        self.header.grid(sticky="n", column=0, columnspan=3, padx=(0, 0), pady=(30, 10))
-        self.clients_label.grid(sticky="we", column=0, columnspan=1, padx=(20, 0), pady=(30, 10))
+        self.clients_label.grid(sticky="we", column=0, columnspan=1, padx=(23, 0), pady=(30, 0))
 
         self.clients_dropdown.grid(sticky="we", column=0, columnspan=1, padx=(20, 0), pady=(0, 20))
         self.button_frame.grid(sticky="we", column=0, columnspan=3, padx=(20, 20), pady=(0, 40))
@@ -91,7 +88,10 @@ class TransCalc:
                 discount_current_row = str(
                     int(self.client_dict[self.clients_dropdown.get()]["matrix"][matrix_row] * 100)
                 )
-                row_percentage_label = ttk.Label(self.matrix_rows_frame, text=matrix_row + "%")
+                if matrix_row[-1].isnumeric():
+                    row_percentage_label = ttk.Label(self.matrix_rows_frame, text=matrix_row + "%")
+                else:
+                    row_percentage_label = ttk.Label(self.matrix_rows_frame, text=matrix_row)
 
                 row_word_count_input = ttk.Entry(self.matrix_rows_frame, textvariable=sv, width=25)
                 self.matrix_entries.append(row_word_count_input)

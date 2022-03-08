@@ -16,6 +16,9 @@ class TransCalc:
         self.root.title("Trans-Calc")
         self.root.geometry("550x700")
 
+        self.root.tk.eval("ttk::style configure Success.TLabel -foreground green")
+        self.root.tk.eval("ttk::style configure Error.TLabel -foreground #cc0000")
+
         self.mainframe = ttk.Frame(self.root)
         self.mainframe.pack(fill="both", expand=True)
 
@@ -219,7 +222,9 @@ class AddClientWindow:
         self.header = ttk.Label(self.mainframe, text="Add Client", font=("TkDefaultFont", 18), justify="center")
 
         self.client_name_label = ttk.Label(self.mainframe, text="Client Name")
-        self.client_name_entry = ttk.Entry(self.mainframe, width=25)
+        self.client_name_var = tkinter.StringVar()
+        self.client_name_var.trace_add("write", self.set_save_button_disabled)
+        self.client_name_entry = ttk.Entry(self.mainframe, textvariable=self.client_name_var, width=25)
 
         self.client_currency_label = ttk.Label(self.mainframe, text="Currency")
         self.client_currency_entry = ttk.Entry(self.mainframe, width=8)
@@ -238,6 +243,7 @@ class AddClientWindow:
         self.toast_message_frame = ttk.Frame(self.mainframe)
 
         self.save_client_button = ttk.Button(self.mainframe, command=self.save_client, text="Save Client")
+        self.error_label = ttk.Label(self.mainframe, text="boo", style="Error.TLabel")
 
         self.window.bind("<Return>", lambda e: self.save_client())
 
@@ -281,27 +287,31 @@ class AddClientWindow:
 
         self.toast_message_frame.grid(column=0, columnspan=3, row=7)
 
-        self.save_client_button.grid(sticky="se", column=2, row=8, padx=(0, 0), pady=(0, 20))
+        self.save_client_button.grid(sticky="se", column=2, row=8, pady=(0, 10))
+        self.error_label.grid(sticky="se", column=0, columnspan=3, row=9, pady=(0, 20))
 
         self.client_name_entry.focus()
 
-    def get_client_data(self) -> Optional[ClientData]:
+    def get_client_data(self) -> ClientData:
+        if not self.client_name_var.get():
+            raise ValueError("Please specify a client name.")
         ranges_and_discounts = {}
         for range_var, discount_var in zip(self.range_vars, self.discount_vars):
             if range_var.get() and discount_var.get():
                 try:
                     discount = int(discount_var.get())
                 except ValueError:
-                    return None
+                    raise ValueError("Discount must be an integer.")
                 ranges_and_discounts[range_var.get()] = discount / 100
-            elif range_var.get() or discount_var.get():
-                # One entry in the row is empty but the other isn't
-                return None
+            elif range_var.get():
+                raise ValueError("You must specify a discount for each match range.")
+            elif discount_var.get():
+                raise ValueError("You must specify a match range for each discount.")
 
         try:
             full_rate = float(self.client_full_rate_var.get().replace(",", "."))
         except ValueError:
-            return None
+            raise ValueError("Full rate must be a number.")
 
         return {
             "full_rate": full_rate,
@@ -310,13 +320,18 @@ class AddClientWindow:
         }
 
     def set_save_button_disabled(self, *unnecessary_args: object) -> None:
-        if self.get_client_data() is None:
+        try:
+            self.get_client_data()
+        except ValueError as e:
+            error_message = str(e)
+            self.error_label.config(text=error_message)
             self.save_client_button.config(state="disabled")
         else:
+            self.error_label.config(text="")
             self.save_client_button.config(state="normal")
 
     def save_client(self) -> None:
-        client_name = self.client_name_entry.get()
+        client_name = self.client_name_var.get()
         client_data = self.get_client_data()
         assert client_data is not None
         self.client_dict[client_name] = client_data
@@ -325,8 +340,7 @@ class AddClientWindow:
         self.display_success_message(client_name)
 
     def clear_matrix_rows(self):
-        self.client_name_entry.delete(0, "end")
-        self.client_name_entry.delete(0, "end")
+        self.client_name_var.set("")
         self.client_currency_entry.delete(0, "end")
         self.client_full_rate_var.set("")
         for var in self.range_vars + self.discount_vars:
@@ -339,7 +353,6 @@ class AddClientWindow:
             font=("TkDefaultFont", 16),
             style="Success.TLabel",
         )
-        saved_success_label.tk.eval("ttk::style configure Success.TLabel -foreground green")
         saved_success_label.grid(sticky="se", column=0, row=0, padx=(0, 0), pady=(0, 0))
 
 
@@ -353,7 +366,7 @@ class EditClientWindow(AddClientWindow):
         self.populate_data_fields()
 
     def populate_data_fields(self):
-        self.client_name_entry.insert(0, self.currently_selected_client)
+        self.client_name_var.set(self.currently_selected_client)
         self.client_currency_entry.insert(0, self.client_dict[self.currently_selected_client]["currency"])
         self.client_full_rate_var.set(self.client_dict[self.currently_selected_client]["full_rate"])
 

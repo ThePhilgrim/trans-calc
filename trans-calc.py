@@ -297,10 +297,7 @@ class AddClientWindow:
                 discount = int(discount_var.get())
                 ranges_and_discounts[range_var.get()] = discount / 100
 
-        try:
-            full_rate = float(self.client_full_rate_var.get().replace(",", "."))
-        except ValueError:
-            raise ValueError("Full rate must be a number.")
+        full_rate = float(self.client_full_rate_var.get().replace(",", "."))
 
         return {
             "full_rate": full_rate,

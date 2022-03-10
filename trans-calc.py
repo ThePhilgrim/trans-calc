@@ -2,7 +2,6 @@ from pathlib import Path
 import appdirs
 import json
 import tkinter
-from functools import partial
 from tkinter import ttk
 from typing import Dict, Any, TypedDict, Optional
 
@@ -18,7 +17,7 @@ class TransCalc:
         self.root.geometry("550x700")
 
         self.root.tk.eval("ttk::style configure Success.TLabel -foreground green")
-        self.root.tk.eval("ttk::style configure Error.TEntry -fieldbackground #ff6666")
+        self.root.tk.eval("ttk::style configure Error.TLabel -foreground #cc0000")
 
         self.mainframe = ttk.Frame(self.root)
         self.mainframe.pack(fill="both", expand=True)
@@ -224,7 +223,7 @@ class AddClientWindow:
 
         self.client_name_label = ttk.Label(self.mainframe, text="Client Name")
         self.client_name_var = tkinter.StringVar()
-        self.client_name_var.trace_add("write", self.validate_client_name)
+        self.client_name_var.trace_add("write", self.set_save_button_disabled)
         self.client_name_entry = ttk.Entry(self.mainframe, textvariable=self.client_name_var, width=25)
 
         self.client_currency_label = ttk.Label(self.mainframe, text="Currency")
@@ -233,7 +232,7 @@ class AddClientWindow:
 
         self.client_full_rate_label = ttk.Label(self.mainframe, text="Full Rate\nper Word\n(required)")
         self.client_full_rate_var = tkinter.StringVar()
-        self.client_full_rate_var.trace_add("write", self.validate_full_rate)
+        self.client_full_rate_var.trace_add("write", self.set_save_button_disabled)
         self.client_full_rate_entry = ttk.Entry(self.mainframe, width=8, textvariable=self.client_full_rate_var)
         self.client_full_rate_example = ttk.Label(self.mainframe, text='(ex. "0.15")')
 
@@ -244,6 +243,7 @@ class AddClientWindow:
         self.toast_message_frame = ttk.Frame(self.mainframe)
 
         self.save_client_button = ttk.Button(self.mainframe, command=self.save_client, text="Save Client")
+        self.error_label = ttk.Label(self.mainframe, text="boo", style="Error.TLabel")
 
         self.window.bind("<Return>", lambda e: self.save_client())
 
@@ -251,7 +251,7 @@ class AddClientWindow:
         self.discount_vars = []
         self.create_ui_grid()
 
-        self.enable_or_disable_save_button()
+        self.set_save_button_disabled()
 
     def create_ui_grid(self) -> None:
         self.mainframe.rowconfigure(7, weight=1)
@@ -276,26 +276,37 @@ class AddClientWindow:
             self.range_vars.append(range_var)
             self.discount_vars.append(discount_var)
 
+            # Update button disabled-ness when entry contents change
+            range_var.trace_add("write", self.set_save_button_disabled)
+            discount_var.trace_add("write", self.set_save_button_disabled)
+
             range_entry = ttk.Entry(self.matrix_frame, width=8, textvariable=range_var)
             discount_entry = ttk.Entry(self.matrix_frame, width=8, textvariable=discount_var)
             range_entry.grid(sticky="ne", column=1, row=i, padx=(0, 30), pady=(0, 5))
             discount_entry.grid(sticky="nw", column=2, row=i, padx=(0, 0), pady=(0, 5))
 
-            # Currently range isn't validated in any way
-            discount_var.trace_add("write", partial(self.validate_discount, discount_entry))
-
         self.toast_message_frame.grid(column=0, columnspan=3, row=7)
 
         self.save_client_button.grid(sticky="se", column=2, row=8, pady=(0, 10))
+        self.error_label.grid(sticky="se", column=0, columnspan=3, row=9, pady=(0, 20))
 
         self.client_name_entry.focus()
 
     def get_client_data(self) -> ClientData:
+        if not self.client_name_var.get():
+            raise ValueError("Please specify a client name.")
         ranges_and_discounts = {}
         for range_var, discount_var in zip(self.range_vars, self.discount_vars):
             if range_var.get() and discount_var.get():
-                discount = int(discount_var.get())
+                try:
+                    discount = int(discount_var.get())
+                except ValueError:
+                    raise ValueError("Discount must be an integer.")
                 ranges_and_discounts[range_var.get()] = discount / 100
+            elif range_var.get():
+                raise ValueError("You must specify a discount for each match range.")
+            elif discount_var.get():
+                raise ValueError("You must specify a match range for each discount.")
 
         try:
             full_rate = float(self.client_full_rate_var.get().replace(",", "."))
@@ -308,53 +319,21 @@ class AddClientWindow:
             "matrix": ranges_and_discounts,
         }
 
-    def validate_client_name(self, *unnecessary_args: object) -> None:
-        if self.client_name_var.get():
-            self.client_name_entry.config(style="")
-        else:
-            self.client_name_entry.config(style="Error.TEntry")
-        self.enable_or_disable_save_button()
-
-    def validate_full_rate(self, *unnecessary_args: object) -> None:
+    def set_save_button_disabled(self, *unnecessary_args: object) -> None:
         try:
-            float(self.client_full_rate_var.get().replace(",", "."))
-        except ValueError:
-            self.client_full_rate_entry.config(style="Error.TEntry")
-        else:
-            self.client_full_rate_entry.config(style="")
-        self.enable_or_disable_save_button()
-
-    def validate_discount(self, entry: ttk.Entry, *unnecessary_args: object) -> None:
-        if entry.get():
-            try:
-                int(entry.get())
-            except ValueError:
-                entry.config(style="Error.TEntry")
-            else:
-                entry.config(style="")
-        else:
-            entry.config(style="")
-        self.enable_or_disable_save_button()
-
-    def enable_or_disable_save_button(self) -> None:
-        widgets = self.matrix_frame.winfo_children() + self.mainframe.winfo_children()
-        entries = [widget for widget in widgets if isinstance(widget, ttk.Entry)]
-        if any(entry["style"] == "Error.TEntry" for entry in entries):
+            self.get_client_data()
+        except ValueError as e:
+            error_message = str(e)
+            self.error_label.config(text=error_message)
             self.save_client_button.config(state="disabled")
         else:
+            self.error_label.config(text="")
             self.save_client_button.config(state="normal")
 
     def save_client(self) -> None:
-        # Some entries should become red here, if the user forgot to fill them.
-        # But they shouldn't be red initially.
-        self.validate_client_name()
-        self.validate_full_rate()
-        if str(self.save_client_button["state"]) == "disabled":
-            # one of the entries became red
-            return
-
         client_name = self.client_name_var.get()
         client_data = self.get_client_data()
+        assert client_data is not None
         self.client_dict[client_name] = client_data
         save_client_data_to_json(self.client_dict)
         self.clear_matrix_rows()

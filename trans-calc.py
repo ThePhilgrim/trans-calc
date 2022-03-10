@@ -308,6 +308,8 @@ class AddClientWindow:
             elif discount_var.get():
                 raise ValueError("You must specify a match range for each discount.")
 
+        if not self.client_full_rate_var.get():
+            raise ValueError("Please specify a full rate.")
         try:
             full_rate = float(self.client_full_rate_var.get().replace(",", "."))
         except ValueError:
@@ -326,6 +328,19 @@ class AddClientWindow:
             error_message = str(e)
             self.error_label.config(text=error_message)
             self.save_client_button.config(state="disabled")
+
+            if error_message in (
+                "Please specify a client name.",
+                "Please specify a full rate.",
+                "You must specify a discount for each match range.",
+                "You must specify a match range for each discount.",
+            ):
+                # These errors happen when you fill the form correctly.
+                # Don't annoy the user with red error messages.
+                self.error_label.config(style="")
+            else:
+                self.error_label.config(style="Error.TLabel")
+
         else:
             self.error_label.config(text="")
             self.save_client_button.config(state="normal")

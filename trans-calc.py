@@ -302,6 +302,8 @@ class AddClientWindow:
                     discount = int(discount_var.get())
                 except ValueError:
                     raise ValueError("Discount must be a percentage (0-100).")
+                if not (0 <= discount <= 100):
+                    raise ValueError("Discount must be a percentage (0-100).")
                 ranges_and_discounts[range_var.get()] = discount / 100
             elif range_var.get():
                 raise ValueError("You must specify a discount for each match range.")

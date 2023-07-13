@@ -228,7 +228,6 @@ class TransCalc:
     self.root.clipboard_append(total_words)
     self.root.update()
 
-    # Optionally, display a message to indicate that the value has been copied
     copied_label = ttk.Label(self.secondary_frame, text="Total words copied!", style="Success.TLabel")
     copied_label.grid(column=2, row=0, padx=(10, 0), pady=(0, 0))
     self.root.after(2000, lambda: copied_label.grid_forget())

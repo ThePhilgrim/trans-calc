@@ -53,6 +53,7 @@ class TransCalc:
         self.full_price_label = ttk.Label(self.full_price_frame, text="Full price:", font=("TkDefaultFont", 18))
 
         self.create_ui_grid()
+        self.bind_hotkeys()
         if self.client_dict:
             self.update_matrix_rows()
 
@@ -66,6 +67,9 @@ class TransCalc:
         self.add_client_button.grid(column=0, row=0, padx=(5, 5))
         self.edit_client_button.grid(column=1, row=0, padx=(5, 5))
         self.delete_client_button.grid(column=2, row=0, padx=(5, 5))
+
+        self.clear_button = ttk.Button(self.secondary_frame, command=self.clear_fields, text="Clear Fields")
+
 
     def update_matrix_rows(self) -> None:
         self.matrix_stringvars = []
@@ -206,6 +210,33 @@ class TransCalc:
             field.delete(0, "end")
 
         self.matrix_entries[0].focus_set()
+
+    def copy_full_price(self) -> None:
+    full_price = self.full_price_sv.get()
+    self.root.clipboard_clear()
+    self.root.clipboard_append(full_price)
+    self.root.update()
+
+    # Optionally, display a message to indicate that the value has been copied
+    copied_label = ttk.Label(self.full_price_frame, text="Full price copied!", style="Success.TLabel")
+    copied_label.grid(sticky="w", column=2, row=0, padx=(10, 0), pady=(40, 0))
+    self.root.after(2000, lambda: copied_label.grid_forget())
+
+    def copy_total_words(self) -> None:
+    total_words = self.total_words_sv.get()
+    self.root.clipboard_clear()
+    self.root.clipboard_append(total_words)
+    self.root.update()
+
+    copied_label = ttk.Label(self.secondary_frame, text="Total words copied!", style="Success.TLabel")
+    copied_label.grid(column=2, row=0, padx=(10, 0), pady=(0, 0))
+    self.root.after(2000, lambda: copied_label.grid_forget())
+
+    def bind_hotkeys(self) -> None:
+    #Hotkey can be adjusted as preferred 
+    self.root.bind("<Control-Alt-c>", lambda e: self.clear_fields())
+    self.root.bind("<Control-Alt-f>", lambda e: self.copy_full_price())
+    self.root.bind("<Control-Alt-w>", lambda e: self.copy_total_words())
 
 
 # Client Windows
